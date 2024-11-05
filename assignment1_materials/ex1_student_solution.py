@@ -33,7 +33,18 @@ class Solution:
         """
         # return homography
         """INSERT YOUR CODE HERE"""
-        pass
+        n = match_p_src.shape[1]
+        arr = []
+        for i in range(n):
+            x = np.array([*match_p_src[:, i], 1])
+            z = np.zeros(3)
+            ux = match_p_dst[0, i] * x
+            vx = match_p_dst[1, i] * x
+            arr.append(np.array([np.hstack([-x, z, ux]), np.hstack([z, -x, vx])]))
+        A = np.vstack(arr)
+        U, S, VT = svd(A)
+        homography = VT[-1, :].reshape(3, 3)
+        return homography
 
     @staticmethod
     def compute_forward_homography_slow(
@@ -60,7 +71,16 @@ class Solution:
         """
         # return new_image
         """INSERT YOUR CODE HERE"""
-        pass
+        new_image = np.zeros(dst_image_shape, dtype=np.uint8)
+        for row in range(src_image.shape[0]):
+            for col in range(src_image.shape[1]):
+                uv1_tag = np.matmul(homography, np.array([[col, row, 1]]).T)
+                uv1_tag /= uv1_tag[-1]
+                new_col, new_row = np.round(uv1_tag[:2]).astype(int)
+                if (np.logical_and(0 < new_row, new_row < dst_image_shape[0]) and
+                        np.logical_and(0 < new_col, new_col < dst_image_shape[1])):
+                    new_image[new_row, new_col] = src_image[row, col]
+        return new_image
 
     @staticmethod
     def compute_forward_homography_fast(
