@@ -74,11 +74,11 @@ class Solution:
         new_image = np.zeros(dst_image_shape, dtype=np.uint8)
         for row in range(src_image.shape[0]):
             for col in range(src_image.shape[1]):
-                uv1_tag = np.matmul(homography, np.array([[col, row, 1]]).T)
+                uv1_tag = homography @ np.array([[col, row, 1]]).T
                 uv1_tag /= uv1_tag[-1]
                 new_col, new_row = np.round(uv1_tag[:2]).astype(int)
-                if (np.logical_and(0 < new_row, new_row < dst_image_shape[0]) and
-                        np.logical_and(0 < new_col, new_col < dst_image_shape[1])):
+                if (np.logical_and(0 <= new_row, new_row < dst_image_shape[0]) and
+                        np.logical_and(0 <= new_col, new_col < dst_image_shape[1])):
                     new_image[new_row, new_col] = src_image[row, col]
         return new_image
 
@@ -111,7 +111,23 @@ class Solution:
         """
         # return new_image
         """INSERT YOUR CODE HERE"""
-        pass
+        new_image = np.zeros(dst_image_shape, dtype=np.uint8)
+        rows, cols = np.meshgrid(np.arange(src_image.shape[0]), np.arange(src_image.shape[1]), indexing='ij')
+        homogeneous_coords = np.stack([cols, rows, np.ones_like(rows)])
+        homogeneous_coords = homogeneous_coords.reshape(3, -1)
+        transformed_coords = homography @ homogeneous_coords
+        transformed_coords /= transformed_coords[-1]
+        transformed_cols = np.round(transformed_coords[0]).astype(int)
+        transformed_rows = np.round(transformed_coords[1]).astype(int)
+        # Filter the valid transformed coordinates that fall within the destination image bounds
+        valid_indices = (
+            np.logical_and(0 <= transformed_rows, transformed_rows < dst_image_shape[0]) &
+            np.logical_and(0 <= transformed_cols, transformed_cols < dst_image_shape[1])
+            )
+        # Map the source image pixels to the destination image using the valid indices
+        new_image[transformed_rows[valid_indices], transformed_cols[valid_indices]] =\
+            src_image[valid_indices.reshape(src_image.shape[:2])]
+        return new_image
 
     @staticmethod
     def test_homography(homography: np.ndarray,
