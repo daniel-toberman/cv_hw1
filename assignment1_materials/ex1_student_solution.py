@@ -156,7 +156,22 @@ class Solution:
         """
         # return fit_percent, dist_mse
         """INSERT YOUR CODE HERE"""
-        pass
+        fit_cntr = 0
+        dists = []
+        n = match_p_src.shape[1]
+        for i in range(n):
+            x = np.array([*match_p_src[:, i], 1])
+            uv1_tag = homography @ x.T
+            uv1_tag /= uv1_tag[-1]
+            u_tag, v_tag = np.round(uv1_tag[:2]).astype(int)
+            # calculate distanct between mapper src point and dst point
+            err = np.sqrt((u_tag - match_p_dst[0, i]) ** 2 + (v_tag - match_p_dst[1, i]) ** 2)
+            if err < max_err:
+                dists.append(err)
+                fit_cntr += 1
+        dist_mse = np.mean(np.array(dists) ** 2)
+        fit_percent = fit_cntr / n
+        return fit_percent, dist_mse
 
     @staticmethod
     def meet_the_model_points(homography: np.ndarray,
