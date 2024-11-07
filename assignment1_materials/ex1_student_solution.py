@@ -458,7 +458,7 @@ class Solution:
         final_homography = self.add_translation_to_backward_homography(back_homography,
                                                                        pad.pad_left,
                                                                        pad.pad_up)
-        
+
         # # just to create backward wrap image
         # img_panorama = self.compute_backward_mapping(back_homography, src_image, dst_image.shape)
 
