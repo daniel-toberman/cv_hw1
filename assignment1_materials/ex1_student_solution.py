@@ -295,8 +295,6 @@ class Solution:
 
         # return backward_warp
         """INSERT YOUR CODE HERE"""
-        new_image = np.zeros(dst_image_shape, dtype=np.uint8)
-
         dst_rows, dst_cols = np.meshgrid(np.arange(dst_image_shape[0]), np.arange(dst_image_shape[1]), indexing='ij')
         dst_homogeneous_coords = np.stack([dst_cols, dst_rows, np.ones_like(dst_rows)])
         dst_homogeneous_coords = dst_homogeneous_coords.reshape(3, -1)
@@ -306,17 +304,15 @@ class Solution:
         transformed_rows = transformed_coords[1]
         transformed_cols = transformed_coords[0]
 
-        # pad src_image with zeros to avoid out-of-bounds error
-        padded_src_img = np.zeros([int(np.max(transformed_rows)) + 1, int(np.max(transformed_cols)) + 1, 3])
-        padded_src_img[:src_image.shape[0], :src_image.shape[1], :] = src_image
-        new_image = griddata(
-            points=(transformed_rows, transformed_cols),
-            values=padded_src_img[transformed_rows.astype(int), transformed_cols.astype(int)],
-            xi=(dst_rows, dst_cols),
+        src_rows, src_cols = np.meshgrid(np.arange(src_image.shape[0]), np.arange(src_image.shape[1]), indexing='ij')
+        backward_warp = griddata(
+            points=(src_rows.flatten(), src_cols.flatten()),
+            values=src_image[src_rows.flatten(), src_cols.flatten()],
+            xi=(transformed_rows, transformed_cols),
             method='linear',
             fill_value=0
-            ).astype(int)
-        return new_image
+            ).astype(int).reshape(dst_image_shape)
+        return backward_warp
 
     @staticmethod
     def find_panorama_shape(src_image: np.ndarray,
@@ -462,7 +458,7 @@ class Solution:
         final_homography = self.add_translation_to_backward_homography(back_homography,
                                                                        pad.pad_left,
                                                                        pad.pad_up)
-        img_panorama = self.compute_backward_mapping(final_homography, src_image, dst_image.shape)
+        img_panorama = self.compute_backward_mapping(back_homography, src_image, dst_image.shape)
         img_panorama = self.compute_backward_mapping(final_homography, src_image, (H, W, 3))
         img_panorama[pad.pad_up:(dst_image.shape[0] + pad.pad_up),
         pad.pad_left:(dst_image.shape[1] + pad.pad_left), :] = dst_image[:, :, :]
