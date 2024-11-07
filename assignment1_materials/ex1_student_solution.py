@@ -458,9 +458,11 @@ class Solution:
         final_homography = self.add_translation_to_backward_homography(back_homography,
                                                                        pad.pad_left,
                                                                        pad.pad_up)
-        img_panorama = self.compute_backward_mapping(back_homography, src_image, dst_image.shape)
+        
+        # # just to create backward wrap image
+        # img_panorama = self.compute_backward_mapping(back_homography, src_image, dst_image.shape)
+
         img_panorama = self.compute_backward_mapping(final_homography, src_image, (H, W, 3))
         img_panorama[pad.pad_up:(dst_image.shape[0] + pad.pad_up),
-        pad.pad_left:(dst_image.shape[1] + pad.pad_left), :] = dst_image[:, :, :]
-
-        pass
+                     pad.pad_left:(dst_image.shape[1] + pad.pad_left), :] = dst_image[:, :, :]
+        return np.clip(img_panorama, 0, 255).astype(np.uint8)
